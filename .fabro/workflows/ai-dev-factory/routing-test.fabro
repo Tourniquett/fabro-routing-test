@@ -1,0 +1,59 @@
+digraph RoutingTest {
+    graph [
+        goal="Verify failure routing, three failed attempts, recovery escalation, and final success without LLM calls",
+        max_node_visits="20"
+    ]
+    rankdir=LR
+
+    start [shape=Mdiamond, label="Start"]
+    exit [shape=Msquare, label="Exit"]
+
+    test_1 [shape=parallelogram, label="Test attempt 1", script="echo TEST_ATTEMPT_1_FAILED; exit 1"]
+    fix_1 [shape=parallelogram, label="Simulated fix 1", script="echo FIX_1_REACHED"]
+    test_2 [shape=parallelogram, label="Test attempt 2", script="echo TEST_ATTEMPT_2_FAILED; exit 1"]
+    fix_2 [shape=parallelogram, label="Simulated fix 2", script="echo FIX_2_REACHED"]
+    test_3 [shape=parallelogram, label="Test attempt 3", script="echo TEST_ATTEMPT_3_FAILED; exit 1"]
+
+    architect_recovery [
+        shape=parallelogram,
+        label="Architect reassessment simulated",
+        script="echo ARCHITECT_ESCALATION_REACHED; printf RECOVERY_OK > recovery.marker"
+    ]
+
+    recovery_test [
+        shape=parallelogram,
+        label="Recovery verification",
+        script="test -f recovery.marker && grep -q RECOVERY_OK recovery.marker"
+    ]
+
+    passed [
+        shape=parallelogram,
+        label="PASS",
+        script="printf PASS > routing-test-result.txt; echo ROUTING_TEST_PASS"
+    ]
+
+    blocked [
+        shape=parallelogram,
+        label="BLOCKED",
+        script="printf BLOCKED > routing-test-result.txt; echo ROUTING_TEST_BLOCKED"
+    ]
+
+    start -> test_1
+    test_1 -> fix_1 [condition="outcome=failed"]
+    test_1 -> blocked
+    fix_1 -> test_2
+
+    test_2 -> fix_2 [condition="outcome=failed"]
+    test_2 -> blocked
+    fix_2 -> test_3
+
+    test_3 -> architect_recovery [condition="outcome=failed"]
+    test_3 -> blocked
+    architect_recovery -> recovery_test
+
+    recovery_test -> passed [condition="outcome=succeeded"]
+    recovery_test -> blocked
+
+    passed -> exit
+    blocked -> exit
+}

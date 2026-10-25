@@ -1,4 +1,29 @@
-# Fabro project configuration
-# https://docs.fabro.computer/getting-started/quick-start
-
 _version = 1
+
+[environments.react-node]
+provider = "docker"
+
+[environments.react-node.image]
+docker = "ai-dev-node:local"
+
+[environments.react-node.resources]
+cpu = 2
+memory = "4GB"
+
+[environments.react-node.lifecycle]
+preserve = false
+stop_on_terminal = true
+
+[environments.python-test]
+provider = "docker"
+
+[environments.python-test.image]
+docker = "python:3.12-alpine"
+
+[environments.python-test.resources]
+cpu = 2
+memory = "4GB"
+
+[environments.python-test.lifecycle]
+preserve = false
+stop_on_terminal = true
